@@ -142,7 +142,7 @@ if __name__ == "__main__":
     
     df_stock_list = pd.read_csv("./stock_list.csv", encoding="CP949")
     df_stock_list.rename(columns = {"단축코드": 'JONGMOK_CD', "한글 종목약명": 'JONGMOK_NM', "시장구분": "MARKET_DIV", "소속부": "IN_CHARGE"}, inplace = True)
-    df_filtered = df_stock_list[(df_stock_list.MARKET_DIV == "KOSDAQ") & (df_stock_list.IN_CHARGE.str.contains("소속부없음") == False)]
+    df_filtered = df_stock_list[((df_stock_list.MARKET_DIV == "KOSDAQ") | (df_stock_list.MARKET_DIV == "KOSPI")) & (df_stock_list.IN_CHARGE.str.contains("소속부없음") == False)]
 
     idx = 0
     for (jongmok_cd, jongmok_nm) in zip(df_filtered["JONGMOK_CD"], df_filtered['JONGMOK_NM']):
