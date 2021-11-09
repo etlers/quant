@@ -24,8 +24,8 @@ SELECT T1.YEAR_MM
   FROM quant.jongmok_perform T1
  WHERE 1 = 1
    and JONGMOK_CD = '$$CD$$'
-   AND year_div = '$$YEAR_DIV$$'
-   AND div_nm = '$$DIV_NM$$'
+   AND YEAR_DIV = '$$YEAR_DIV$$'
+   AND DIV_NM = '$$DIV_NM$$'
    AND YEAR_MM < date_format(NOW(), '%Y.%m')
 """
 list_target = []
@@ -58,6 +58,7 @@ list_div_nm = [
 list_year_div = [
     "년도", "분기"
 ]
+
 
 def performance_data(cd, year_div, div_nm):
     extract_qry = perform_qry.replace("$$CD$$",cd).replace("$$YEAR_DIV$$",year_div).replace("$$DIV_NM$$",div_nm)
