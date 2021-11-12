@@ -12,7 +12,7 @@ import sys
 import time, datetime
 import pandas as pd
 
-sys.path.append("C:/Users/etlers/Documents/project/python/common")
+sys.path.append("../pycom")
 import date_util
 import conn_db
 

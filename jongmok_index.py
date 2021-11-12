@@ -10,7 +10,18 @@ import conn_db
 
 now_dtm = date_util.get_now_datetime_string()
 
-dict_accnt_ym = {}
+dict_accnt_ym = {}import sys
+import time, datetime
+from numpy.core.numeric import NaN
+import pandas as pd
+
+sys.path.append("../pycom")
+import crawl_soup
+import date_util
+import conn_db
+
+now_dtm = date_util.get_now_datetime_string()
+
 dict_summary_idx = {}
 
 list_skip_row = [
@@ -158,4 +169,75 @@ if __name__ == "__main__":
             conn_db.transaction_data(DEL_QRY, db='quant')
         except:
             print(DEL_QRY)
+        execute(jongmok_cd, jongmok_nm)
+
+dict_summary_idx = {}
+
+list_skip_row = [
+    '</th>', '<th>', '</td>', '<td>', '</tr>', '<tr>', '<td class="">', '</dl>', '<dl>', '</li>', '</ul>', '<ul>', '</div>', '</em>',
+    '<td class="t_line cell_strong">', '<td class="last cell_strong">', '<tr class="line_end">'
+]
+
+
+def company_summary_index(soup, class_id, jongmok_cd, jongmok_nm):
+
+    def remove_string(row_strip):
+        return row_strip.replace("<td>","").replace("</td>","").replace("<em>","").replace("</em>","").replace('<em id="_dvr">','').replace('배','').replace('%','')
+
+    result_jongmok_index = soup.find("div",{"class":class_id})
+
+    list_result = str(result_jongmok_index).split("\n")
+
+    idx = 0
+    next_idx = 0
+    idx_name = ""
+    for row in list_result:
+        row_strip = row.strip()
+        if len(row_strip) == 0 or row_strip in list_skip_row or "caption" in row_strip or "table" in row_strip : continue
+        if "호가 10단계" in row_strip: break
+        idx += 1
+        if "외국인소진율" in row_strip:
+            idx_name = "외국인소진율(%)"
+            next_idx = idx + 6
+        elif '<em id="_dvr">' in row_strip:
+            dict_summary_idx["배당수익률(%)"] = remove_string(row_strip)
+            continue
+        elif "동일업종 PER" in row_strip:
+            idx_name = "동일업종 PER(배)"
+            next_idx = idx + 1
+        
+        if next_idx == idx:
+            dict_summary_idx[idx_name] = remove_string(row_strip)
+
+    for key, val in dict_summary_idx.items():
+        IDX_QRY = f"""
+            INSERT INTO quant.jongmok_idx
+                 (JONGMOK_CD, INS_DT, DIV_NM, IDX_VAL, JONGMOK_NM, MOD_DTM)
+            VALUES
+                 ('{jongmok_cd}', '{now_dtm.split(" ")[0]}', '{key}', {val}, '{jongmok_nm}', NOW())
+            ON DUPLICATE KEY
+            UPDATE IDX_VAL = {val}
+                 , JONGMOK_NM = '{jongmok_nm}'
+                 , MOD_DTM = NOW()
+        """
+        conn_db.transaction_data(IDX_QRY, db='quant')
+
+
+def execute(jongmok_cd, jongmok_nm):
+    url_jongmok = f"https://finance.naver.com/item/main.naver?code={jongmok_cd}"
+
+    soup = crawl_soup.get_soup(url_jongmok)
+
+    company_summary_index(soup, "aside_invest_info", jongmok_cd, jongmok_nm)
+
+
+if __name__ == "__main__":
+    df_stock_list = pd.read_csv("./stock_list.csv", encoding="CP949")
+    df_stock_list.rename(columns = {"단축코드": 'JONGMOK_CD', "한글 종목약명": 'JONGMOK_NM', "시장구분": "MARKET_DIV", "소속부": "IN_CHARGE"}, inplace = True)
+    df_filtered = df_stock_list[((df_stock_list.MARKET_DIV == "KOSDAQ") | (df_stock_list.MARKET_DIV == "KOSPI")) & ((df_stock_list.IN_CHARGE.str.contains("소속부없음") == False) |(df_stock_list.IN_CHARGE.isnull()))]
+    
+    idx = 0
+    for (jongmok_cd, jongmok_nm) in zip(df_filtered["JONGMOK_CD"], df_filtered['JONGMOK_NM']):
+        idx += 1
+        print(idx, jongmok_cd, jongmok_nm)
         execute(jongmok_cd, jongmok_nm)
