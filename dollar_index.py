@@ -143,7 +143,10 @@ def execute(run_dtm):
     now_cur = '{:.2f}'.format(round(now_cur, 2))
     now_rate = '{:.2f}'.format(round(now_rate, 2))
     forgn_rt = '{:.2f}'.format(round(forgn_rt, 2))
-    result = f" {proper_cur} - [{now_cur}, {now_rate}%] [{forgn_rt}% - ({dict_kodex_idx['외국인']} / {buy_amount})] [{dict_kodex_idx['개인']}, {dict_kodex_idx['기관']}]"
+    try:
+        result = f" {proper_cur} - [{now_cur}, {now_rate}%] [{forgn_rt}% - ({dict_kodex_idx['외국인']} / {buy_amount})] [{dict_kodex_idx['개인']}, {dict_kodex_idx['기관']}]"
+    except:
+        result = f" {proper_cur} - [{now_cur}, {now_rate}%]"
     print(result)    
 
 
