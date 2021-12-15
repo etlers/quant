@@ -2,8 +2,11 @@ import requests
 import sys
 import time, datetime
 from bs4 import BeautifulSoup as bs
+import kodex_reverage
 
-sys.path.append("C:/Users/etlers/Documents/project/python/common")
+sys.path.append("/home/ubuntu/etlers/pysrc/pycom")
+
+import crawl_soup
 
 # import send_slack_message as SSM
 # import common_util as CU
@@ -14,6 +17,7 @@ url_kodex = "https://finance.naver.com/"
 
 line_len = 70
 
+
 def get_soup(url):
     response = requests.get( url, headers={"User-agent": "Mozilla/5.0"} )
     soup = bs(response.text, 'html.parser')
@@ -22,7 +26,7 @@ def get_soup(url):
 
 
 def make_usd_index():
-    soup = get_soup(url_index)
+    soup = crawl_soup.get_soup(url_index)
 
     historical_usd_idx = soup.find("div",{"class":"clear overviewDataTable overviewDataTableWithTooltip"})
 
@@ -42,7 +46,7 @@ def make_usd_index():
 
 
 def make_usd_krw():
-    soup = get_soup(url_currency)
+    soup = crawl_soup.get_soup(url_currency)
 
     list_usd_krw = soup.find("div",{"class":"main-current-data"})
 
@@ -76,7 +80,7 @@ def make_usd_krw():
 
 
 def make_kodex_index():
-    soup = get_soup(url_kodex)
+    soup = crawl_soup.get_soup(url_kodex)
 
     kodex_idx = soup.find("div",{"class":"dsc_area dsc_area2"})
 
@@ -137,17 +141,22 @@ def execute(run_dtm):
         try:
             forgn_rt = round((dict_kodex_idx["외국인"] / buy_amount) * 100, 2)
         except:
-            forgn_rt = 0.0        
+            forgn_rt = 0.0
+        try:
+            kodex_status = kodex_reverage.execute()
+        except:
+            kodex_status = "No result"
     # Result
     now_rate = round((now_cur / proper_cur) * 100, 2)
     now_cur = '{:.2f}'.format(round(now_cur, 2))
     now_rate = '{:.2f}'.format(round(now_rate, 2))
     forgn_rt = '{:.2f}'.format(round(forgn_rt, 2))
+    base_currency = '{:.2f}'.format(round(proper_cur, 2))
     try:
-        result = f" {proper_cur} - [{now_cur}, {now_rate}%] [{forgn_rt}% - ({dict_kodex_idx['외국인']} / {buy_amount})] [{dict_kodex_idx['개인']}, {dict_kodex_idx['기관']}]"
+        result = f" {base_currency} - [{now_cur}, {now_rate}%] [{forgn_rt}% - ({dict_kodex_idx['외국인']} / {buy_amount})] [{dict_kodex_idx['개인']}, {dict_kodex_idx['기관']}] {kodex_status}"
     except:
-        result = f" {proper_cur} - [{now_cur}, {now_rate}%]"
-    print(result)    
+        result = f" {base_currency} - [{now_cur}, {now_rate}%]"
+    print(result)
 
 
 if __name__ == "__main__":
@@ -158,10 +167,6 @@ if __name__ == "__main__":
         now_dtm = datetime.datetime.now()
         run_dtm = now_dtm.strftime("%Y-%m-%d %H:%M:%S")
         run_hh = now_dtm.strftime("%H")
-        
-        # if run_hh > "17":
-        #     print("End Calculation for Dealing.")
-        #     break
 
         execute(run_dtm)
         time.sleep(5)

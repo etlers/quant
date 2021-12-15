@@ -2,11 +2,16 @@ import sys
 import time, datetime
 from numpy.core.numeric import NaN
 import pandas as pd
+from pandas.io import html
 
 sys.path.append("../pycom")
 import crawl_soup
 import date_util
 import conn_db
+
+import requests
+from bs4 import BeautifulSoup as bs
+import html5lib
 
 now_dtm = date_util.get_now_datetime_string()
 
@@ -84,28 +89,43 @@ def company_performance(soup, class_id, jongmok_cd, jongmok_nm):
 
 
 def execute(jongmok_cd, jongmok_nm):
-    url_jongmok = f"https://finance.naver.com/item/main.naver?code={jongmok_cd}"
+    url_jongmok = f"https://finance.naver.com/item/coinfo.naver?code={jongmok_cd}"
 
-    soup = crawl_soup.get_soup(url_jongmok)
+    url = 'https://navercomp.wisereport.co.kr/v2/company/c1010001.aspx?cmp_cd=005930'
+    # url = url_tmpl % ('005930', '4', 'Y') # 삼성전자, 4(IFRS 연결), Y:년 단위
 
-    company_performance(soup, "section cop_analysis", jongmok_cd, jongmok_nm)
+    # df = pd.read_html(url, flavor='html5lib')
+    # df = dfs[0]
+    # df = df.set_index('주요재무정보')
+    # df.head()
+    # df.head(10) # 10개 항목만 표시(실제 32개 항목)
+    # print(df[11])
+
+    soup = bs(html, 'html.parser')
+    tables = soup.select("table")
+
+
+    # company_performance(soup, "section cop_analysis", jongmok_cd, jongmok_nm)
 
 
 if __name__ == "__main__":
-    df_stock_list = pd.read_csv("./stock_list.csv", encoding="CP949")
-    df_stock_list.rename(columns = {"단축코드": 'JONGMOK_CD', "한글 종목약명": 'JONGMOK_NM', "시장구분": "MARKET_DIV", "소속부": "IN_CHARGE"}, inplace = True)
-    df_filtered = df_stock_list[((df_stock_list.MARKET_DIV == "KOSDAQ") | (df_stock_list.MARKET_DIV == "KOSPI")) & ((df_stock_list.IN_CHARGE.str.contains("소속부없음") == False) |(df_stock_list.IN_CHARGE.isnull()))]
+    jongmok_cd = "005930"
+    jongmok_nm = "삼성전자"
+    execute(jongmok_cd, jongmok_nm)
+    # df_stock_list = pd.read_csv("./stock_list.csv", encoding="CP949")
+    # df_stock_list.rename(columns = {"단축코드": 'JONGMOK_CD', "한글 종목약명": 'JONGMOK_NM', "시장구분": "MARKET_DIV", "소속부": "IN_CHARGE"}, inplace = True)
+    # df_filtered = df_stock_list[((df_stock_list.MARKET_DIV == "KOSDAQ") | (df_stock_list.MARKET_DIV == "KOSPI")) & ((df_stock_list.IN_CHARGE.str.contains("소속부없음") == False) |(df_stock_list.IN_CHARGE.isnull()))]
     
-    idx = 0
-    for (jongmok_cd, jongmok_nm) in zip(df_filtered["JONGMOK_CD"], df_filtered['JONGMOK_NM']):
-        idx += 1
-        print(idx, jongmok_cd, jongmok_nm)
-        DEL_QRY = f"""
-            DELETE FROM quant.jongmok_perform
-             WHERE JONGMOK_CD = '{jongmok_cd}'
-        """
-        try:
-            conn_db.transaction_data(DEL_QRY, db='quant')
-        except:
-            print(DEL_QRY)
-        execute(jongmok_cd, jongmok_nm)
+    # idx = 0
+    # for (jongmok_cd, jongmok_nm) in zip(df_filtered["JONGMOK_CD"], df_filtered['JONGMOK_NM']):
+    #     idx += 1
+    #     print(idx, jongmok_cd, jongmok_nm)
+    #     DEL_QRY = f"""
+    #         DELETE FROM quant.jongmok_perform
+    #          WHERE JONGMOK_CD = '{jongmok_cd}'
+    #     """
+    #     try:
+    #         conn_db.transaction_data(DEL_QRY, db='quant')
+    #     except:
+    #         print(DEL_QRY)
+        # execute(jongmok_cd, jongmok_nm)
