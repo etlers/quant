@@ -9,11 +9,14 @@ import target_dividend
 def selected_jongmok(df_base):
     df_filetered = df_base[
         (df_base["ROE_MEAN"] > 0.0) & 
-        (df_base["ROE_MEAN"] < 20.0) & 
+        # (df_base["ROE_MEAN"] < 20.0) & 
         (df_base["GAP_RT"] > 0.0) & 
         (df_base["MAX_VAL"] < 30.0) &
+        (df_base["JONGMOK_PBR"] > 0.0) &
         (df_base["JONGMOK_PBR"] < 1.0)
     ]
+
+    df_filetered.to_csv("./selected_jongmok.csv", index=False)
 
     print(df_filetered)
 

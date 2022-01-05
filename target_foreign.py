@@ -16,7 +16,7 @@ SELECT JONGMOK_NM
      , DIV_NM
   FROM quant.jongmok_idx T1
  WHERE 1 = 1
-   AND INS_DT >= DATE_ADD(NOW(), INTERVAL -10 Day)
+   AND INS_DT >= DATE_ADD(NOW(), INTERVAL -20 Day)
 """
 base_min_val = 3.0
 
