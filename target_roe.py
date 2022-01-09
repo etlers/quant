@@ -30,11 +30,15 @@ def execute(qry=run_qry):
     
     for idx, row in df_jongmok_list.iterrows():
         df_jongmok = df_base[df_base.JONGMOK_NM == row.JONGMOK_NM]
+        df_last_roe = df_jongmok[df_jongmok["YEAR_MM"] == df_jongmok.YEAR_MM.max()][["JONGMOK_NM", "PERFORM_VAL"]]
         roe_mean = round(df_jongmok.PERFORM_VAL.mean(), 2)
+        roe_last = round(df_last_roe.PERFORM_VAL.mean(), 2)
+        roe_mean_last_rt = "{}%".format(round((roe_last - roe_mean) / roe_mean * 100, 2))
         if roe_mean > 14.99:
-            list_result.append([row.JONGMOK_NM, roe_mean])
+            list_result.append([row.JONGMOK_NM, roe_mean, roe_last, roe_mean_last_rt])
 
-    df_roe = pd.DataFrame(list_result, columns=["JONGMOK_NM", "ROE_MEAN"])
+    df_roe = pd.DataFrame(list_result, columns=["JONGMOK_NM", "ROE_MEAN", "ROE_LAST", "ROE_MEAN_LAST_RT"])
+
     return df_roe
 
 
