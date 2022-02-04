@@ -45,19 +45,27 @@ def make_usd_index():
     return dict_usd_idx
 
 
+# Now Currency & 52 weeks average
 def make_usd_krw():
     soup = crawl_soup.get_soup(url_currency)
-
-    list_usd_krw = soup.find("div",{"class":"main-current-data"})
-
+    
+    list_usd_krw = soup.find("div",{"class":"instrument-price_instrument-price__3uw25 flex items-end flex-wrap font-bold"})
+    
     if list_usd_krw is None: return -1
 
     idx = 0
     dict_usd_krw = {}
     for row in list_usd_krw:
         row_string = str(row).strip()
+        if 'data-test="instrument-price-last' in row_string:
+            now_currency = float(row_string.split(">")[1].replace("</span>", "").replace(",", "").replace("</span", ""))
+            idx += 1
+            dict_usd_krw[idx] = now_currency
+            break
+        """
         if len(row_string) == 0: continue
         idx += 1
+        print(idx, row_string)
         if idx == 1:
             dict_usd_krw[idx] = row_string.split('<div class="')[1].split(" ")[0]
         else:
@@ -66,15 +74,28 @@ def make_usd_krw():
                 if "span class" not in val: continue
                 list_val.append(val.split('">')[1].replace("</span>",""))
             dict_usd_krw[idx] = list_val
+        """
             
-    list_usd_krw = soup.find("div",{"class":"clear overviewDataTable overviewDataTableWithTooltip"})
-    for row in list_usd_krw:
-        row_string = str(row).strip()
-        if len(row_string) == 0: continue
+    str_avg_dt = str(soup.find("div",{"class":"mb-5 bg-background-surface border-b-2 pb-5 instrumentOverview_overview-section__2hN4A"}))
+    list_temp = str_avg_dt.split('<span class="key-info_dd-numeric__2cYjc"><span>')[1:]
+    for row in list_temp:
+        dt_val = float(row.split('</span')[0].replace(",", ""))
         idx += 1
-        temp = str(row_string.split('<span class="float_lang_base_1">')[1:]).replace("['","")
-        list_temp = temp.replace("</span><span class=","").split('"float_lang_base_2 bold">')
-        dict_usd_krw[idx] = [list_temp[0].replace(" ",""), list_temp[1].replace("</span></div>']","")]
+        # 2: 전일 종가, 3: 매수, 4: 금일 변동, 5: 금일 변동, 6: 금일 시가, 7: 매도, 8: 52주 변동폭, 9: 52주 변동폭, 10: 1년 변동률
+        dict_usd_krw[idx] = dt_val
+    # for row in list_temp:
+    #     print(row)
+    # for row in list_usd_krw:
+    #     row_string = str(row).strip()
+    #     if len(row_string) == 0: continue
+    #     idx += 1
+    #     temp = str(row_string.split('<span class="key-info_dd-numeric__2cYjc"><span>')[1:]).replace("['","")
+    #     print(temp)
+    #     """
+    #     temp = str(row_string.split('<span class="float_lang_base_1">')[1:]).replace("['","")
+    #     list_temp = temp.replace("</span><span class=","").split('"float_lang_base_2 bold">')
+    #     dict_usd_krw[idx] = [list_temp[0].replace(" ",""), list_temp[1].replace("</span></div>']","")]
+    #     """
     
     return dict_usd_krw
 
@@ -111,19 +132,26 @@ def execute(run_dtm):
     # Make Dictionary Data
     dict_usd_idx = make_usd_index()
     dict_usd_krw = make_usd_krw()
-
-    if dict_usd_idx == -1 or dict_usd_krw == -1: return 1
-
+    
+    if dict_usd_idx == -1:
+        print("dict_usd_idx is None")
+        return -1
+    elif dict_usd_krw == -1:
+        print("dict_usd_krw is None")
+        return -1
+    
     # USD Index 52w Average
     year_avg_idx = (float(dict_usd_idx[10][1].split(" - ")[0].replace(",","")) + float(dict_usd_idx[10][1].split(" - ")[1].replace(",",""))) / 2
     # Now Index
     cur_idx = float(dict_usd_idx[4][1].replace(",",""))
     # USD KRW 52w Average
-    year_avg_cur = (float(dict_usd_krw[8][1].split(" - ")[0].replace(",","")) + float(dict_usd_krw[8][1].split(" - ")[1].replace(",",""))) / 2
+    year_avg_cur = round((dict_usd_krw[8] + dict_usd_krw[9]) / 2, 2)
+    # year_avg_cur = (float(dict_usd_krw[8][1].split(" - ")[0].replace(",","")) + float(dict_usd_krw[8][1].split(" - ")[1].replace(",",""))) / 2
     # Now Currency
-    now_cur = float(dict_usd_krw[2][0].replace(",",""))
+    now_cur = dict_usd_krw[1]
+    # now_cur = float(dict_usd_krw[2][0].replace(",",""))
     # Dollar Gap Rate
-    usd_gap_rate = cur_idx / now_cur * 100
+    # usd_gap_rate = cur_idx / now_cur * 100
     # Dollar Gap Rate - 52w
     year_avg_usd_gap_rate = year_avg_idx / year_avg_cur * 100
     # Proper USD KRW
@@ -168,7 +196,8 @@ if __name__ == "__main__":
         run_dtm = now_dtm.strftime("%Y-%m-%d %H:%M:%S")
         run_hh = now_dtm.strftime("%H")
 
-        execute(run_dtm)
+        if execute(run_dtm) == -1:
+            break
         time.sleep(5)
 
     print("#" * line_len)
