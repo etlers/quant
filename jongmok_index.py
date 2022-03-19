@@ -3,25 +3,14 @@ import time, datetime
 from numpy.core.numeric import NaN
 import pandas as pd
 
-sys.path.append("../pycom")
+sys.path.append("/home/ubuntu/etlers/pysrc/pycom")
 import crawl_soup
 import date_util
 import conn_db
 
 now_dtm = date_util.get_now_datetime_string()
 
-dict_accnt_ym = {}import sys
-import time, datetime
-from numpy.core.numeric import NaN
-import pandas as pd
-
-sys.path.append("../pycom")
-import crawl_soup
-import date_util
-import conn_db
-
-now_dtm = date_util.get_now_datetime_string()
-
+dict_accnt_ym = {}
 dict_summary_idx = {}
 
 list_skip_row = [
@@ -152,7 +141,7 @@ def execute(jongmok_cd, jongmok_nm):
 if __name__ == "__main__":
     # execute("000250", "삼천당제약")
     
-    df_stock_list = pd.read_csv("./stock_list.csv", encoding="CP949")
+    df_stock_list = pd.read_csv("/home/ubuntu/etlers/pysrc/quant/stock_list.csv", encoding="CP949")
     df_stock_list.rename(columns = {"단축코드": 'JONGMOK_CD', "한글 종목약명": 'JONGMOK_NM', "시장구분": "MARKET_DIV", "소속부": "IN_CHARGE"}, inplace = True)
     # df_filtered = df_stock_list[((df_stock_list.MARKET_DIV == "KOSDAQ") | (df_stock_list.MARKET_DIV == "KOSPI")) & (df_stock_list.IN_CHARGE.str.contains("소속부없음") == False)]
     df_filtered = df_stock_list[((df_stock_list.MARKET_DIV == "KOSDAQ") | (df_stock_list.MARKET_DIV == "KOSPI")) & ((df_stock_list.IN_CHARGE.str.contains("소속부없음") == False) |(df_stock_list.IN_CHARGE.isnull()))]
