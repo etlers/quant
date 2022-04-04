@@ -1,3 +1,6 @@
+"""
+    달러 인덱스가 올라가면 유가는 내려가고 유가가 내려가면 원달러 환율도 내려가는 흐름을 보인다.
+"""
 import requests
 import sys
 import time, datetime
@@ -84,26 +87,29 @@ while True:
     dict_usd_krw = make_usd_krw()
     
     # USD Index 52w Average
-    year_avg_idx = (float(dict_usd_idx[10][1].split(" - ")[0].replace(",","")) + float(dict_usd_idx[10][1].split(" - ")[1].replace(",",""))) / 2
-    # Now Index
-    cur_idx = float(dict_usd_idx[4][1].replace(",",""))
-    # USD KRW 52w Average
-    year_avg_cur = (dict_usd_krw[1] + dict_usd_krw[2]) / 2
-    # Now Currency
-    now_cur = dict_usd_krw[0]
-    # Dollar Gap Rate
-    # usd_gap_rate = cur_idx / now_cur * 100
-    # Dollar Gap Rate - 52w
-    year_avg_usd_gap_rate = year_avg_idx / year_avg_cur * 100
-    # Proper USD KRW
-    
-    proper_cur = round(cur_idx / year_avg_usd_gap_rate * 100, 2)
-    now_rate = round((now_cur / proper_cur) * 100, 2)
-    now_cur = '{:.2f}'.format(round(now_cur, 2))
-    now_rate = '{:.2f}'.format(round(now_rate, 2))
-    
-    proper_cur = '{:.2f}'.format(round(cur_idx / year_avg_usd_gap_rate * 100, 2))
-    result = f" {proper_cur} - [{now_cur}, {now_rate}%]"
-    print(result)
+    try:
+        year_avg_idx = (float(dict_usd_idx[10][1].split(" - ")[0].replace(",","")) + float(dict_usd_idx[10][1].split(" - ")[1].replace(",",""))) / 2
+        # Now Index
+        cur_idx = float(dict_usd_idx[4][1].replace(",",""))
+        # USD KRW 52w Average
+        year_avg_cur = (dict_usd_krw[1] + dict_usd_krw[2]) / 2
+        # Now Currency
+        now_cur = dict_usd_krw[0]
+        # Dollar Gap Rate
+        # usd_gap_rate = cur_idx / now_cur * 100
+        # Dollar Gap Rate - 52w
+        year_avg_usd_gap_rate = year_avg_idx / year_avg_cur * 100
+        # Proper USD KRW
+        
+        proper_cur = round(cur_idx / year_avg_usd_gap_rate * 100, 2)
+        now_rate = round((now_cur / proper_cur) * 100, 2)
+        now_cur = '{:.2f}'.format(round(now_cur, 2))
+        now_rate = '{:.2f}'.format(round(now_rate, 2))
+        
+        proper_cur = '{:.2f}'.format(round(cur_idx / year_avg_usd_gap_rate * 100, 2))
+        result = f" {proper_cur} - [{now_cur}, {now_rate}%]"
+        print(result)
+    except Exception as e:
+        print("No Data.", e)
     
     time.sleep(5)
