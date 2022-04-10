@@ -56,7 +56,8 @@ df_calc_base = df_calc_base.sort_values(list_ordered_key)
 
 def send_message_to_slack(msg):
     msg = msg.replace('"', "'").replace("/","")
-    url = "https://hooks.slack.com/services/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"
+    # url = "https://hooks.slack.com/services/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"
+    url = "https://hooks.slack.com/services/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"
     payload = { "text" : msg } 
     response = requests.post(url, json=payload)
     print(response)
