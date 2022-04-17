@@ -36,6 +36,7 @@ list_result = []
 list_recent_data = []
 list_no_data = []
 dt = datetime.datetime.now().strftime("%Y-%m-%d")
+# dt = "2022-04-13"
 base_delete_dt = (datetime.datetime.now() - datetime.timedelta(days=10)).strftime("%Y-%m-%d")
 
 

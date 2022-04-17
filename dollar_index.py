@@ -1,6 +1,7 @@
 """
     달러 인덱스가 올라가면 유가는 내려가고 유가가 내려가면 원달러 환율도 내려가는 흐름을 보인다.
 """
+from locale import currency
 import requests
 import sys
 import time, datetime
@@ -17,6 +18,20 @@ url_currency = "https://kr.investing.com/currencies/usd-krw"
 url_kodex = "https://finance.naver.com/"
 
 line_len = 70
+
+
+# Preday Currency
+now_dt = datetime.datetime.now().strftime("%Y.%m.%d")
+
+url_usd_krw = "https://finance.naver.com//marketindex/exchangeDailyQuote.naver?marketindexCd=FX_USDKRW"
+headers = {
+    "referer" : url_usd_krw,    
+    "user-agent" : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.71 Safari/537.36" 
+}
+url = url_usd_krw
+res = requests.get(url=url, headers=headers)
+df_data = pd.read_html(res.text)[0]
+preday_currency = df_data[df_data["날짜"]["날짜"] < now_dt]["매매기준율"].head(1)["매매기준율"].unique()[0]
 
 
 def get_soup(url):
@@ -83,11 +98,11 @@ while True:
     run_dt = now_dtm.strftime("%Y%m%d")
     run_dtm = now_dtm.strftime("%Y-%m-%d %H:%M:%S")
 
-    dict_usd_idx = make_usd_index()
-    dict_usd_krw = make_usd_krw()
-    
     # USD Index 52w Average
     try:
+        dict_usd_idx = make_usd_index()
+        dict_usd_krw = make_usd_krw()
+        
         year_avg_idx = (float(dict_usd_idx[10][1].split(" - ")[0].replace(",","")) + float(dict_usd_idx[10][1].split(" - ")[1].replace(",",""))) / 2
         # Now Index
         cur_idx = float(dict_usd_idx[4][1].replace(",",""))
@@ -103,13 +118,16 @@ while True:
         
         proper_cur = round(cur_idx / year_avg_usd_gap_rate * 100, 2)
         now_rate = round((now_cur / proper_cur) * 100, 2)
+        preday_rate = round((now_cur / preday_currency) * 100, 2)
         now_cur = '{:.2f}'.format(round(now_cur, 2))
         now_rate = '{:.2f}'.format(round(now_rate, 2))
+        preday_rate = '{:.2f}'.format(round(preday_rate, 2))
+        preday_gap = '{:.2f}'.format(round(float(now_cur) - float(preday_currency), 2))
         
         proper_cur = '{:.2f}'.format(round(cur_idx / year_avg_usd_gap_rate * 100, 2))
-        result = f" {proper_cur} - [{now_cur}, {now_rate}%]"
+        result = f" {proper_cur} [{now_cur} {now_rate}% {preday_gap} {preday_rate}%]"
         print(result)
     except Exception as e:
-        print("No Data.", e)
+        print(e)
     
-    time.sleep(5)
+    time.sleep(10)
